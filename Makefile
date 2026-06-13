@@ -1,6 +1,6 @@
 ASM = nasm
-CC = gcc
-LD = ld
+CC = i686-elf-gcc
+LD = i686-elf-ld
 QEMU = qemu-system-i386
 
 LD_FLAGS = -m elf_i386 -g -relocatable
@@ -12,16 +12,26 @@ KERNEL_ASM = kernel/kernel.asm -o build/kernel.asm.o
 KERNEL_C = kernel/kernel.c -o build/kernel.o
 CONSOLE = kernel/console.c -o build/console.o
 STRING = libc/string.c -o build/string.o
+GDT = kernel/gdt/gdt.asm -o build/gdt.asm.o
+IDT = kernel/idt/idt.c -o build/idt.o
+IDT_ASM = kernel/idt/idt.asm -o build/idt.asm.o
+IO = kernel/io/io.asm -o build/io.asm.o
+ISR = kernel/isr/isr.c -o build/isr.o
 
-OBJECT_FILES = build/kernel.asm.o build/kernel.o build/console.o build/string.o
+OBJECT_FILES = build/kernel.asm.o build/kernel.o build/console.o build/string.o build/gdt.asm.o build/idt.o build/io.asm.o build/idt.asm.o build/isr.o
 
 all:
 	clear
 	$(ASM) $(ASM_FLAGS) $(HEAD)
 	$(ASM) $(ASM_FLAGS2) $(KERNEL_ASM)
+	$(ASM) $(ASM_FLAGS2) $(GDT)
+	$(ASM) $(ASM_FLAGS2) $(IO)
+	$(ASM) $(ASM_FLAGS2) $(IDT_ASM)
 	$(CC) $(CC_FLAGS) $(KERNEL_C)
 	$(CC) $(CC_FLAGS) $(CONSOLE)
 	$(CC) $(CC_FLAGS) $(STRING)
+	$(CC) $(CC_FLAGS) $(IDT)
+	$(CC) $(CC_FLAGS) $(ISR)
 	$(LD) $(LD_FLAGS) $(OBJECT_FILES) -o build/kernelfull.o
 	$(CC) -m32 -T linker/linker.ld -o build/kernel.bin -ffreestanding -Os -nostdlib build/kernelfull.o
 	dd if=build/head.bin > HuguiniUnix.bin
