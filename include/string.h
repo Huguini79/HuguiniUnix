@@ -6,5 +6,6 @@
 
 size_t strlen(const char* str);
 int strncmp(const char* str1, const char* str2, int n);
+char * itoa( int value, char * str, int base );
 
 #endif

@@ -1,8 +1,9 @@
 #include "include/io.h"
 #include "include/console.h"
 #include "include/string.h"
+#include "include/pcb.h"
 
-#define MAX_SIZE_BUFFER 1024
+#define MAX_SIZE_BUFFER 1048576
 
 char keyboard_buffer[MAX_SIZE_BUFFER];
 int pos = 0;
@@ -17,7 +18,7 @@ volatile uint32_t ticks = 0;
 
 void isr_pit_handler()
 {
-    ticks += 10; /* In Unix, every millisecond, the CPU ticks increments 10 times */
+    ticks += 1;
     outb(0x20, 0x20);
 }
 
@@ -58,10 +59,24 @@ void isr_keyboard_handler()
     if (scancode == 0x15) {printk("y"); addCharacter('y');}
     if (scancode == 0x2C) {printk("z"); addCharacter('z');}
 
+    if (scancode == 0x39) {printk(" "); addCharacter(' ');}
+
+    if (scancode == 0x1A) {printk("["); addCharacter('[');}
+    if (scancode == 0x1B) {printk("]"); addCharacter(']');}
+    if (scancode == 0x0D) {printk("="); addCharacter('=');}
+    if (scancode == 0x28) {printk("'"); addCharacter('"');}
+    if (scancode == 0x29) {printk("`"); addCharacter('`');}
+    if (scancode == 0x0C) {printk("-"); addCharacter('-');}
+    if (scancode == 0x34) {printk("."); addCharacter('.');}
+    if (scancode == 0x33) {printk(","); addCharacter(',');}
+    if (scancode == 0x35) {printk("/"); addCharacter('/');}
+    if (scancode == 0x27) {printk(";"); addCharacter(';');}
+    if (scancode == 0x0F) {printk("     "); addCharacter(' ');}
+
     if (scancode == 0x1C) {
         if (strncmp(keyboard_buffer, "help", 4) == 0)
         {
-            printk("\nclear                     help\n");
+            printk("\nclear                     help\necho                        ps\n");
 
         } else if (strncmp(keyboard_buffer, "", 1) == 0)
         {
@@ -70,6 +85,40 @@ void isr_keyboard_handler()
         } else if (strncmp(keyboard_buffer, "clear", 5) == 0)
         {
             clearScreen();
+        }
+
+        else if (strncmp(keyboard_buffer, "fork", 4) == 0)
+        {
+            fork();
+            yield();
+            printk("\n");
+        }
+
+        else if (strncmp(keyboard_buffer, "echo", 4) == 0)
+        {
+            printk("\n");
+            char ret[2];
+            int pos = 5;
+            ret[1] = '\0';
+            while (keyboard_buffer[pos] != '\0')
+            {
+                ret[0] = keyboard_buffer[pos];
+                printk(ret);
+                pos++;
+            }
+            printk("\n");
+        }
+
+        else if (strncmp(keyboard_buffer, ";", 1) == 0)
+        {
+            printk("\n");
+        }
+
+        else if (strncmp(keyboard_buffer, "ps", 2) == 0)
+        {
+            printk("\n");
+            showAllProcesses();
+            printk("\n");
         }
         
         else

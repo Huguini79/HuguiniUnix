@@ -62,6 +62,7 @@ void printk(const char* str)
         {
             vga.x = 0;
             vga.y++;
+            update_cursor(vga.x+1, vga.y);
         }
 
         else if (vga.y >= VGA_HEIGHT)

@@ -17,8 +17,9 @@ IDT = kernel/idt/idt.c -o build/idt.o
 IDT_ASM = kernel/idt/idt.asm -o build/idt.asm.o
 IO = kernel/io/io.asm -o build/io.asm.o
 ISR = kernel/isr/isr.c -o build/isr.o
+PCB = kernel/pcb.c -o build/pcb.o
 
-OBJECT_FILES = build/kernel.asm.o build/kernel.o build/console.o build/string.o build/gdt.asm.o build/idt.o build/io.asm.o build/idt.asm.o build/isr.o
+OBJECT_FILES = build/kernel.asm.o build/kernel.o build/console.o build/string.o build/gdt.asm.o build/idt.o build/io.asm.o build/idt.asm.o build/isr.o build/pcb.o
 
 all:
 	clear
@@ -32,6 +33,7 @@ all:
 	$(CC) $(CC_FLAGS) $(STRING)
 	$(CC) $(CC_FLAGS) $(IDT)
 	$(CC) $(CC_FLAGS) $(ISR)
+	$(CC) $(CC_FLAGS) $(PCB)
 	$(LD) $(LD_FLAGS) $(OBJECT_FILES) -o build/kernelfull.o
 	$(CC) -m32 -T linker/linker.ld -o build/kernel.bin -ffreestanding -Os -nostdlib build/kernelfull.o
 	dd if=build/head.bin > HuguiniUnix.bin
