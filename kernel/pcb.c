@@ -84,16 +84,29 @@ struct pcb* initNewProcess(pid_t pid) /* ONLY FOR KERNEL USE */
     newProcess->state = Ready;
     newProcess->pid = pid;
     newProcess->process_name = "empty process";
-    newProcess->eax = 0;
-    newProcess->ebx = 0;
-    newProcess->ecx = 0;
-    newProcess->edx = 0;
-    newProcess->edi = 0;
-    newProcess->esi = 0;
-    newProcess->ebp = 0;
-    newProcess->esp = 0x3FF000 + pid * 8192; /* Each process has 8 KB of stack */
-    newProcess->eip = 0;
-    newProcess->ppid = 0;
+
+    newProcess->tss.esp0 = 0x600000 + pid * 4096; /* 4 KB OF STACK FOR EACH INTERVENTION OF A PROCESS */
+    newProcess->tss.ss0 = 0x10; /* DATA SELECTOR (KERNEL) */
+
+    newProcess->tss.es = 0x10;
+    newProcess->tss.ds = 0x10;
+    newProcess->tss.fs = 0x10;
+    newProcess->tss.gs = 0x10;
+    newProcess->tss.ss = 0x10;
+
+    newProcess->tss.eflags = 0;
+
+    newProcess->tss.eax = 0;
+    newProcess->tss.ebx = 0;
+    newProcess->tss.ecx = 0;
+    newProcess->tss.edx = 0;
+    newProcess->tss.edi = 0;
+    newProcess->tss.esi = 0;
+    newProcess->tss.ebp = 0;
+    newProcess->tss.esp = 0x3FF000 + pid * 8192; /* Each process has 8 KB of stack */
+    newProcess->tss.eip = 0;
+    newProcess->tss.ebp = 0;
+
     return newProcess;
 }
 
