@@ -15,12 +15,12 @@ void kernel_main()
     yield();
 
     __asm__ volatile ("sti");
-
+    
     while (1)
     {
         __asm__ volatile ("hlt");
         yield();
-        execCurrentProcess();
+        // execCurrentProcess();
     }
     
 

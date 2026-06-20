@@ -12,23 +12,25 @@ KERNEL_ASM = kernel/kernel.asm -o build/kernel.asm.o
 KERNEL_C = kernel/kernel.c -o build/kernel.o
 CONSOLE = kernel/console.c -o build/console.o
 STRING = libc/string.c -o build/string.o
-GDT = kernel/gdt/gdt.asm -o build/gdt.asm.o
+GDT = kernel/gdt/gdt.c -o build/gdt.o
 IDT = kernel/idt/idt.c -o build/idt.o
 IDT_ASM = kernel/idt/idt.asm -o build/idt.asm.o
 IO = kernel/io/io.asm -o build/io.asm.o
 ISR = kernel/isr/isr.c -o build/isr.o
 PCB = kernel/pcb.c -o build/pcb.o
+PCB_ASM = kernel/pcb.asm -o build/pcb.asm.o
 
-OBJECT_FILES = build/kernel.asm.o build/kernel.o build/console.o build/string.o build/gdt.asm.o build/idt.o build/io.asm.o build/idt.asm.o build/isr.o build/pcb.o
+OBJECT_FILES = build/kernel.asm.o build/kernel.o build/console.o build/string.o build/gdt.o build/idt.o build/io.asm.o build/idt.asm.o build/isr.o build/pcb.o build/pcb.asm.o
 
 all:
 	clear
 	$(ASM) $(ASM_FLAGS) $(HEAD)
 	$(ASM) $(ASM_FLAGS2) $(KERNEL_ASM)
-	$(ASM) $(ASM_FLAGS2) $(GDT)
 	$(ASM) $(ASM_FLAGS2) $(IO)
 	$(ASM) $(ASM_FLAGS2) $(IDT_ASM)
+	$(ASM) $(ASM_FLAGS2) $(PCB_ASM)
 	$(CC) $(CC_FLAGS) $(KERNEL_C)
+	$(CC) $(CC_FLAGS) $(GDT)
 	$(CC) $(CC_FLAGS) $(CONSOLE)
 	$(CC) $(CC_FLAGS) $(STRING)
 	$(CC) $(CC_FLAGS) $(IDT)
@@ -39,7 +41,7 @@ all:
 	dd if=build/head.bin > HuguiniUnix.bin
 	dd if=build/kernel.bin >> HuguiniUnix.bin
 	dd if=/dev/zero bs=1048576 count=16 >> HuguiniUnix.bin
-	$(QEMU) HuguiniUnix.bin
+	$(QEMU) -d cpu_reset HuguiniUnix.bin
 
 clean:
 	clear

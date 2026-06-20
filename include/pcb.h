@@ -37,6 +37,7 @@ struct tss {
 	uint32_t esp;
 	uint32_t ebp;
 	uint32_t edi;
+    uint32_t esi;
 	uint32_t es;
 	uint32_t cs;
 	uint32_t ss;
@@ -47,8 +48,6 @@ struct tss {
 	uint32_t iopb;
 
 }__attribute__((packed));
-
-/* WAIT A MINUTE, IN THIS OPERATING SYSTEM, ALL PROCESSES ARE RING 0, NOT IN OTHER RINGS */
 
 struct pcb
 {
@@ -63,11 +62,12 @@ struct pcb
 
 void fillProcessTable();
 void initMultitasking();
-struct pcb* initNewProcess(pid_t pid);
+struct pcb* initNewProcess(pid_t pid, uint32_t func);
 int fork();
 int exec(struct pcb* pcb);
 void execCurrentProcess();
 void showAllProcesses();
 void yield();
+uint32_t getCurrentEIP();
 
 #endif

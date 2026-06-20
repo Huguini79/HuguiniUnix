@@ -1,6 +1,7 @@
 #include "include/console.h"
 #include "include/pcb.h"
 #include "include/string.h"
+#include "include/gdt.h"
 
 #include <stdint.h>
 #include <stddef.h>
@@ -61,24 +62,28 @@ void func3()
     while(1) {__asm__ volatile ("hlt");}
 }
 
+void addTSS(struct pcb* pcb)
+{
+    uint32_t tss_address = (uint32_t)&(pcb->tss);
+    setSegmentDescriptor(3+pcb->pid, sizeof(pcb->tss) - 1, (tss_address & 0xFFFF), (tss_address >> 16) & 0xFF, 0x89, 0x40, (tss_address >> 24) & 0xFF);
+}
+
 void initMultitasking()
 {
     fillProcessTable();
-    struct pcb* newProcess = initNewProcess(1);
+    struct pcb* newProcess = initNewProcess(1, (uint32_t)func);
     newProcess->state = Ready;
     newProcess->ppid = 0;
-    newProcess->eip = (uint32_t)func;
-    struct pcb* newProcess2 = initNewProcess(2);
+    struct pcb* newProcess2 = initNewProcess(2, (uint32_t)func2);
     newProcess2->state = Ready;
     newProcess2->ppid = 1;
-    newProcess2->eip = (uint32_t)func2;
-    struct pcb* newProcess3 = initNewProcess(3);
+    struct pcb* newProcess3 = initNewProcess(3, (uint32_t)func3);
     newProcess3->state = Ready;
     newProcess3->ppid = 2;
-    newProcess3->eip = (uint32_t)func3;
+
 }
 
-struct pcb* initNewProcess(pid_t pid) /* ONLY FOR KERNEL USE */
+struct pcb* initNewProcess(pid_t pid, uint32_t func) /* ONLY FOR KERNEL USE */
 {
     struct pcb* newProcess = &processes_table[pid];
     newProcess->state = Ready;
@@ -87,6 +92,8 @@ struct pcb* initNewProcess(pid_t pid) /* ONLY FOR KERNEL USE */
 
     newProcess->tss.esp0 = 0x600000 + pid * 4096; /* 4 KB OF STACK FOR EACH INTERVENTION OF A PROCESS */
     newProcess->tss.ss0 = 0x10; /* DATA SELECTOR (KERNEL) */
+
+    newProcess->tss.cs = 0x08; /* CODE SELECTOR (KERNEL) */
 
     newProcess->tss.es = 0x10;
     newProcess->tss.ds = 0x10;
@@ -104,8 +111,14 @@ struct pcb* initNewProcess(pid_t pid) /* ONLY FOR KERNEL USE */
     newProcess->tss.esi = 0;
     newProcess->tss.ebp = 0;
     newProcess->tss.esp = 0x3FF000 + pid * 8192; /* Each process has 8 KB of stack */
-    newProcess->tss.eip = 0;
+    newProcess->tss.eip = func;
     newProcess->tss.ebp = 0;
+
+    newProcess->tss.eflags = 0x202;
+
+    newProcess->tss.iopb = 0x80000000;
+
+    addTSS(newProcess);
 
     return newProcess;
 }
@@ -113,19 +126,19 @@ struct pcb* initNewProcess(pid_t pid) /* ONLY FOR KERNEL USE */
 int fork()
 {
     pid_t childPID = searchForFreePID();
-    struct pcb* childProcess = initNewProcess(childPID);
+    struct pcb* childProcess = initNewProcess(childPID, current_process->tss.eip);
     if (childPID != 0)
     {
         childProcess->ppid = current_process->pid;
-        childProcess->eax = current_process->eax;
-        childProcess->ebx = current_process->ebx;
-        childProcess->ecx = current_process->ecx;
-        childProcess->edx = current_process->edx;
-        childProcess->edi = current_process->edi;
-        childProcess->esi = current_process->esi;
-        childProcess->ebp = current_process->ebp;
-        childProcess->esp = current_process->esp;
-        childProcess->eip = current_process->eip;
+        childProcess->tss.eax = current_process->tss.eax;
+        childProcess->tss.ebx = current_process->tss.ebx;
+        childProcess->tss.ecx = current_process->tss.ecx;
+        childProcess->tss.edx = current_process->tss.edx;
+        childProcess->tss.edi = current_process->tss.edi;
+        childProcess->tss.esi = current_process->tss.esi;
+        childProcess->tss.ebp = current_process->tss.ebp;
+        childProcess->tss.esp = current_process->tss.esp;
+        childProcess->tss.eip = current_process->tss.eip;
 
         if (current_process->pid != current_process->ppid)
         {
@@ -146,29 +159,24 @@ int exec(struct pcb* pcb)
 {
     if (current_process != NULL && pcb != NULL)
     {
+
+        struct
+        {
+            uint32_t offset;
+            uint16_t selector;
+
+        } __attribute__((packed)) far_target;
+
         current_process = pcb;
-        __asm__ volatile (
-            "movl %0, %%esp\n\t"
-            "jmp *%1\n\t"
-            :
-            : "m"(current_process->esp), "m"(current_process->eip)
-            : "memory"
-        );
+
+        far_target.offset = 0;
+        far_target.selector = (3 + current_process->pid) * 8;
+
+        __asm__ volatile ("ljmp *%0":: "m"(far_target));
         return 0;
     }
 
     return -1;
-}
-
-void saveCurrentProcessContext()
-{
-    __asm__ volatile ("movl %%eax, %0" : "=m"(processes_table[current_process->pid].eax) ::);
-    __asm__ volatile ("movl %%ebx, %0" : "=m"(processes_table[current_process->pid].ebx) ::);
-    __asm__ volatile ("movl %%edx, %0" : "=m"(processes_table[current_process->pid].edx) ::);
-    __asm__ volatile ("movl %%ecx, %0" : "=m"(processes_table[current_process->pid].ecx) ::);
-    __asm__ volatile ("movl %%edi, %0" : "=m"(processes_table[current_process->pid].edi) ::);
-    __asm__ volatile ("movl %%esi, %0" : "=m"(processes_table[current_process->pid].esi) ::);
-    __asm__ volatile ("movl %%esp, %0" : "=m"(processes_table[current_process->pid].esp) ::);
 }
 
 void execCurrentProcess()
@@ -203,10 +211,9 @@ pid_t searchForRunning()
 
 void yield()
 {
-    saveCurrentProcessContext();
     current_process = next_process;
     current_process->state = Running;
-    if (current_process->eip != 0 && current_process->state != Free)
+    if (current_process->tss.eip != 0 && current_process->state != Free)
     {
         pid_t next_pid = (next_process->pid+1) % MAX_PROCESSES;
         next_process = &processes_table[next_pid];
@@ -229,7 +236,7 @@ void yield()
         }
     }
 
-    exec(current_process);
+    // exec(current_process);
 }
 
 void showAllProcesses()
