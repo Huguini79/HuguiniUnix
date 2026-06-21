@@ -63,6 +63,7 @@ struct pcb
 
 void fillProcessTable();
 void addTSS(struct pcb* pcb);
+struct pcb* returnCurrentProcess();
 void initMultitasking();
 struct pcb* initNewProcess(pid_t pid, uint32_t func);
 int fork();

@@ -2,5 +2,6 @@
 #define KERNEL_H
 
 void kernel_main();
+void displayRegisters();
 
 #endif

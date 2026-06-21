@@ -31,7 +31,13 @@ isr_keyboard_handler_stub:
     iretd
 
 isr_syscall_handler_stub:
-    pusha
+    push eax
+    push ebx
+    push edx
+    push ecx
     call isr_syscall_handler
-    popa
+    pop eax
+    pop ebx
+    pop edx
+    pop ecx
     iretd

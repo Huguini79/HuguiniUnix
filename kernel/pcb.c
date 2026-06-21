@@ -23,6 +23,11 @@ pid_t searchForFreePID()
     return 0;
 }
 
+struct pcb* returnCurrentProcess()
+{
+    return current_process;
+}
+
 void func()
 {
     /*

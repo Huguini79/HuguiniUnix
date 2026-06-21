@@ -19,8 +19,10 @@ IO = kernel/io/io.asm -o build/io.asm.o
 ISR = kernel/isr/isr.c -o build/isr.o
 PCB = kernel/pcb.c -o build/pcb.o
 PCB_ASM = kernel/pcb.asm -o build/pcb.asm.o
+KEYBOARD = kernel/keyboard.c -o build/keyboard.o
+SYSCALL = kernel/syscall.c -o build/syscall.o
 
-OBJECT_FILES = build/kernel.asm.o build/kernel.o build/console.o build/string.o build/gdt.o build/idt.o build/io.asm.o build/idt.asm.o build/isr.o build/pcb.o build/pcb.asm.o
+OBJECT_FILES = build/kernel.asm.o build/kernel.o build/console.o build/string.o build/gdt.o build/idt.o build/io.asm.o build/idt.asm.o build/isr.o build/pcb.o build/pcb.asm.o build/keyboard.o build/syscall.o
 
 all:
 	clear
@@ -36,6 +38,8 @@ all:
 	$(CC) $(CC_FLAGS) $(IDT)
 	$(CC) $(CC_FLAGS) $(ISR)
 	$(CC) $(CC_FLAGS) $(PCB)
+	$(CC) $(CC_FLAGS) $(KEYBOARD)
+	$(CC) $(CC_FLAGS) $(SYSCALL)
 	$(LD) $(LD_FLAGS) $(OBJECT_FILES) -o build/kernelfull.o
 	$(CC) -m32 -T linker/linker.ld -o build/kernel.bin -ffreestanding -Os -nostdlib build/kernelfull.o
 	dd if=build/head.bin > HuguiniUnix.bin
