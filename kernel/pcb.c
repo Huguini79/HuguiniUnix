@@ -7,8 +7,8 @@
 #include <stddef.h>
 
 struct pcb processes_table[MAX_PROCESSES];
-struct pcb* current_process = &processes_table[0];
-struct pcb* next_process = &processes_table[1];
+struct pcb* current_process = &processes_table[1];
+struct pcb* next_process = &processes_table[2];
 
 pid_t searchForFreePID()
 {
@@ -155,25 +155,25 @@ int fork()
     }
 }
 
-int exec(struct pcb* pcb)
+int exec(struct pcb* process)
 {
-    if (current_process != NULL && pcb != NULL)
+    if (process != NULL)
     {
-
-        struct
+        volatile struct
         {
             uint32_t offset;
             uint16_t selector;
 
-        } __attribute__((packed)) far_target;
+        } __attribute__((packed)) _tmp;
+        
+        _tmp.offset = 0;
+        _tmp.selector = (process->pid + 3) * 8;
 
-        current_process = pcb;
+            __asm__ volatile ("sti");
 
-        far_target.offset = 0;
-        far_target.selector = (3 + current_process->pid) * 8;
 
-        __asm__ volatile ("ljmp *%0":: "m"(far_target));
-        return 0;
+        __asm__ volatile ("ljmp %0" :: "m"(_tmp));
+            return 0;
     }
 
     return -1;
@@ -221,7 +221,7 @@ void yield()
 
     } else
     {
-        if (searchForRunning() < 1)
+        if (searchForRunning() < 2)
         {
             current_process = &processes_table[0];
             next_process = &processes_table[1];
@@ -236,7 +236,7 @@ void yield()
         }
     }
 
-    // exec(current_process);
+    exec(current_process);
 }
 
 void showAllProcesses()

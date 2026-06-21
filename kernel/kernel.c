@@ -4,10 +4,23 @@
 #include "include/idt.h"
 #include "include/pcb.h"
 
+struct pcb* process;
+struct pcb* second_process;
+
+void process2()
+{
+    printk("\nPROCESS 2");
+    yield();
+}
+
 void process1()
 {
-    printk("JADKLJALKÑJ DASKLDJ ALÑKS JKLASJ DLKj dlkJ DLKÑj lkd lñK KLAJÑ SFADSLKF ASDLK");
-    while (1) {__asm__ volatile ("sti");}
+    printk("\nPROCESS 1");
+    second_process = initNewProcess(2, (uint32_t)process2);
+    second_process->state = Running;
+    process->state = Ready;
+    yield();
+    // exec(second_process);
 }
 
 void kernel_main()
@@ -31,24 +44,14 @@ void kernel_main()
         "ltr %ax\n\t"
     );
 
-    struct pcb* process = initNewProcess(1, (uint32_t)process1);
+    process = initNewProcess(1, (uint32_t)process1);
     process->state = Running;
-    // addTSS(process);
     
-    volatile struct
+    int n = exec(process);
+    if (n == 0)
     {
-        uint32_t offset;
-        uint16_t selector;
-
-    } __attribute__((packed)) _tmp;
-    
-    _tmp.offset = 0;
-    _tmp.selector = (process->pid + 3) * 8;
-
-        __asm__ volatile ("sti");
-
-
-    __asm__ volatile ("ljmp %0" :: "m"(_tmp));
+        printk("\nProcess executed with success\n");
+    }
 
     while (1)
     {
