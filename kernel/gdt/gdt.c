@@ -40,10 +40,6 @@ void GdtInstall()
     setSegmentDescriptor(1, 0xFFFF, 0x00, 0x00, 0x9B, 0xCF, 0x00); /* Code */
     setSegmentDescriptor(2, 0xFFFF, 0x00, 0x00, 0x93, 0xCF, 0x00); /* Data */
 
-    setSegmentDescriptor(3, 0, 0, 0, 0, 0, 0); /* Selector 0x18: TSS Actual */
-    setSegmentDescriptor(4, 0, 0, 0, 0, 0, 0); /* Selector 0x20: TSS Destino */
-
-
     gdtr.limit = sizeof(AllDescriptors) - 1;
     gdtr.base = (uint32_t)AllDescriptors;
 

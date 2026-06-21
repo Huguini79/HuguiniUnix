@@ -65,7 +65,7 @@ void func3()
 void addTSS(struct pcb* pcb)
 {
     uint32_t tss_address = (uint32_t)&(pcb->tss);
-    setSegmentDescriptor(3+pcb->pid, sizeof(pcb->tss) - 1, (tss_address & 0xFFFF), (tss_address >> 16) & 0xFF, 0x89, 0x40, (tss_address >> 24) & 0xFF);
+    setSegmentDescriptor(3+pcb->pid, sizeof(pcb->tss), (tss_address & 0xFFFF), (tss_address >> 16) & 0xFF, 0x89, 0x40, (tss_address >> 24) & 0xFF);
 }
 
 void initMultitasking()
