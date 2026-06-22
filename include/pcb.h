@@ -55,6 +55,7 @@ struct pcb
     pid_t pid;
     enum State state;
     uint32_t uid, eiud, gid, egid;
+	uint32_t signal;
     uint32_t exit_code;
     struct tss tss; /* HAHA, I DO NOT USE SOFTWARE MULTITASKING HAHAHAHAHA */
     pid_t ppid;
@@ -67,9 +68,11 @@ struct pcb* returnCurrentProcess();
 void initMultitasking();
 struct pcb* initNewProcess(pid_t pid, uint32_t func);
 int fork();
+void kill(struct pcb* pcb, uint32_t signal);
 int exec(struct pcb* pcb);
 void execCurrentProcess();
 void showAllProcesses();
+pid_t getCurrentPID();
 void yield();
 uint32_t getCurrentEIP();
 

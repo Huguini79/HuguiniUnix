@@ -30,26 +30,6 @@ struct pcb* returnCurrentProcess()
 
 void func()
 {
-    /*
-    int res = fork();
-    if (res == -1)
-    {
-        printk("ERROR WHILE EXECUTING FORK()\n");
-        // yield();
-
-    } else if (res == 0)
-    {
-        printk("Hello from child process\n");
-        // yield();
-        // while (1) {}
-
-    } else
-    {
-        printk("Hello from the father process\n");
-        // yield();
-    }
-    // yield();
-    */
     printk("process1");
     yield();
 }
@@ -88,11 +68,22 @@ void initMultitasking()
 
 }
 
+void kill(struct pcb* pcb, uint32_t signal)
+{
+
+}
+
+void finished()
+{
+    yield();
+}
+
 struct pcb* initNewProcess(pid_t pid, uint32_t func) /* ONLY FOR KERNEL USE */
 {
     struct pcb* newProcess = &processes_table[pid];
     newProcess->state = Ready;
     newProcess->pid = pid;
+    newProcess->signal = 0;
     newProcess->process_name = "empty process";
 
     newProcess->tss.esp0 = 0x600000 + pid * 4096; /* 4 KB OF STACK FOR EACH INTERVENTION OF A PROCESS */
@@ -115,7 +106,10 @@ struct pcb* initNewProcess(pid_t pid, uint32_t func) /* ONLY FOR KERNEL USE */
     newProcess->tss.edi = 0;
     newProcess->tss.esi = 0;
     newProcess->tss.ebp = 0;
-    newProcess->tss.esp = 0x3FF000 + pid * 8192; /* Each process has 8 KB of stack */
+    uint32_t* stack = (uint32_t*)0x3FF000 + pid * 8192; /* Each process has 8 KB of stack */
+    stack--;
+    *stack = (uint32_t)finished;
+    newProcess->tss.esp = (uint32_t)stack;
     newProcess->tss.eip = func;
     newProcess->tss.ebp = 0;
 
@@ -126,6 +120,11 @@ struct pcb* initNewProcess(pid_t pid, uint32_t func) /* ONLY FOR KERNEL USE */
     addTSS(newProcess);
 
     return newProcess;
+}
+
+pid_t getCurrentPID()
+{
+    return current_process->pid;
 }
 
 int fork()

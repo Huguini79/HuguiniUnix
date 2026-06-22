@@ -1,6 +1,6 @@
 ASM = nasm
-CC = i686-elf-gcc
-LD = i686-elf-ld
+CC = gcc
+LD = ld
 QEMU = qemu-system-i386
 
 LD_FLAGS = -m elf_i386 -g -relocatable
@@ -21,8 +21,9 @@ PCB = kernel/pcb.c -o build/pcb.o
 PCB_ASM = kernel/pcb.asm -o build/pcb.asm.o
 KEYBOARD = kernel/keyboard.c -o build/keyboard.o
 SYSCALL = kernel/syscall.c -o build/syscall.o
+SIGNAL = kernel/signal.c -o build/signal.o
 
-OBJECT_FILES = build/kernel.asm.o build/kernel.o build/console.o build/string.o build/gdt.o build/idt.o build/io.asm.o build/idt.asm.o build/isr.o build/pcb.o build/pcb.asm.o build/keyboard.o build/syscall.o
+OBJECT_FILES = build/kernel.asm.o build/kernel.o build/console.o build/string.o build/gdt.o build/idt.o build/io.asm.o build/idt.asm.o build/isr.o build/pcb.o build/pcb.asm.o build/keyboard.o build/syscall.o build/signal.o
 
 all:
 	clear
@@ -40,6 +41,7 @@ all:
 	$(CC) $(CC_FLAGS) $(PCB)
 	$(CC) $(CC_FLAGS) $(KEYBOARD)
 	$(CC) $(CC_FLAGS) $(SYSCALL)
+	$(CC) $(CC_FLAGS) $(SIGNAL)
 	$(LD) $(LD_FLAGS) $(OBJECT_FILES) -o build/kernelfull.o
 	$(CC) -m32 -T linker/linker.ld -o build/kernel.bin -ffreestanding -Os -nostdlib build/kernelfull.o
 	dd if=build/head.bin > HuguiniUnix.bin

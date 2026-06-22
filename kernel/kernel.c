@@ -10,28 +10,36 @@ struct pcb* second_process;
 
 void process2()
 {
-    printk("\nPROCESS 2");
-    char* buf = "Hello";
-    size_t count = 5;
+    char buff[16];
+    printk("Hello, I am the second process PID=");
+    itoa(getCurrentPID(), buff, 10);
+    printk(buff);
+    printk("\n");
+    char* buf = "BUF";
+    size_t count = 3;
     __asm__ volatile (
-        "movl $4, %%eax\n\t"
-        "movl $1, %%ebx\n\t"
-        "movl %0, %%ecx\n\t"
-        "movl %1, %%edx\n\t"
+        "mov $4, %%eax\n\t"
+        "mov $1, %%ebx\n\t"
+        "mov %0, %%ecx\n\t"
+        "mov %1, %%edx\n\t"
         "int $0x80\n\t"
         :
         : "r" (buf), "r"(count)
     );
-    yield();
+    // yield()
 }
 
 void process1()
 {
-    printk("\nPROCESS 1");
+    char buf[16];
+    printk("\nHello, I am the first process PID=");
+    itoa(getCurrentPID(), buf, 10);
+    printk(buf);
+    printk("\n");
     second_process = initNewProcess(2, (uint32_t)process2);
     second_process->state = Running;
     process->state = Ready;
-    yield();
+    // yield();
 }
 
 void displayRegisters()
@@ -96,7 +104,7 @@ void kernel_main()
 {
     InitScreen();
     clearScreen();
-    printk("Welcome to HuguiniUnix\n\ntype help to see the command list\n\n> ††");
+    printk("Welcome to HuguiniUnix\n\ntype help to see the command list\n\n> ");
     GdtInstall();
     IdtInstall();
 
@@ -114,7 +122,8 @@ void kernel_main()
     process = initNewProcess(1, (uint32_t)process1);
     process->state = Running;
     
-    int n = exec(process);
+    int n;
+    n = exec(process);
     if (n == 0)
     {
         printk("\nProcess executed with success\n");
